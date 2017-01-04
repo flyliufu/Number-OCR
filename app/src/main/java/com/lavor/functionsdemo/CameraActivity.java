@@ -14,6 +14,7 @@ import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
@@ -24,8 +25,14 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.googlecode.tesseract.android.TessBaseAPI;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CameraActivity extends AppCompatActivity implements SurfaceHolder.Callback, View.OnClickListener, Camera.PictureCallback, Camera.ShutterCallback, Camera.PreviewCallback {
 	
@@ -38,10 +45,18 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 	private int flag;
 	private byte[] mData;
 	private Bitmap mBitmap;
+	//识别语言英文
+	static final String DEFAULT_LANGUAGE = "eng";
 	private Point mPoint;
 	private ImageView mIvResult;
-	private DisplayMetrics metrics;
-	private float density;
+	private TextView mTvResult;
+	private Camera.PreviewCallback mPreviewCallback = new Camera.PreviewCallback() {
+		@Override
+		public void onPreviewFrame(byte[] data, Camera camera) {
+
+		}
+	};
+
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -54,12 +69,11 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 
 		// 获取屏幕信息
 		WindowManager mManger = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
-		DisplayMetrics metrics = getResources().getDisplayMetrics();
-		density = metrics.density;
 		display = mManger.getDefaultDisplay();
 		mIvResult = (ImageView) findViewById(R.id.iv_result);
 		mRvCamera = (SurfaceView) findViewById(R.id.sv_camera);
 		mIvPhotoRect = (RectImageView) findViewById(R.id.iv_photo_rect);
+		mTvResult = (TextView) findViewById(R.id.tv_result);
 
 		findViewById(R.id.btn_take_photo).setOnClickListener(this);
 		holder = mRvCamera.getHolder();//获得句柄
@@ -84,6 +98,7 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 				// 打开摄像头
 				camera = Camera.open(cameraIndex);
 				camera.setPreviewCallback(this);
+				camera.setPreviewCallback(mPreviewCallback);
 				camera.setPreviewDisplay(holder); // 设置用于显示拍照影像的SurfaceHolder对象
 				camera.setDisplayOrientation(0); // 相机自然的角度
 				camera.startPreview(); // 开始预览
@@ -147,6 +162,7 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 		List<Camera.Size> sizes = parameters.getSupportedPictureSizes();
 		Camera.Size optimalPreviewSize = getOptimalPreviewSize(sizes, mPoint.x, mPoint.y);
 		parameters.setPreviewSize(optimalPreviewSize.width, optimalPreviewSize.height);
+		parameters.setPictureSize(optimalPreviewSize.width, optimalPreviewSize.height);
 		camera.setParameters(parameters);
 	}
 	
@@ -221,22 +237,19 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 		Rect drawRect = mIvPhotoRect.getDrawRect();
 		if (mData != null && mPoint != null && drawRect != null) {
 
-			BitmapFactory.Options opts = new BitmapFactory.Options();
-			opts.inSampleSize = 1;
-			mBitmap = BitmapFactory.decodeByteArray(mData, 0, mData.length,opts);
-			if (mBitmap != null) {
+			Bitmap bitmap = BitmapFactory.decodeByteArray(mData, 0, mData.length);
+			if (bitmap != null) {
 				//截取
-				Bitmap bitmap = Bitmap.createScaledBitmap(mBitmap, mPoint.x, mPoint.y, true);
-				Bitmap rectBitmap = Bitmap.createBitmap(bitmap, drawRect.top, drawRect.left, drawRect.width(), drawRect.height());
-				if (!mBitmap.isRecycled()) {
-					mBitmap.recycle();
-				}
-				final Drawable drawable = new BitmapDrawable(getResources(), bitmap);
+				Bitmap rectBitmap = Bitmap.createScaledBitmap(bitmap, mPoint.x, mPoint.y, true);
+				mBitmap = Bitmap.createBitmap(rectBitmap, drawRect.top, drawRect.left, drawRect.width(), drawRect.height());
+
+				final Drawable drawable = new BitmapDrawable(getResources(), mBitmap);
 				mHandler.post(new Runnable() {
 					@Override
 					public void run() {
 						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
 							mIvResult.setBackground(drawable);
+							EnglishOCR();
 						} else {
 							mIvResult.setBackgroundDrawable(drawable);
 						}
@@ -247,21 +260,30 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 		flag--;
 	}
 
-	public Bitmap resizeImage(Bitmap bitmap, int w, int h) {
-		Bitmap BitmapOrg = bitmap;
-		int width = BitmapOrg.getWidth();
-		int height = BitmapOrg.getHeight();
-		int newWidth = w;
-		int newHeight = h;
+	String regEx = "[^0-9]";
 
-		float scaleWidth = ((float) newWidth) / width;
-		float scaleHeight = ((float) newHeight) / height;
+	public void EnglishOCR() {
+		//设置图片可以缓存
+		mIvResult.setDrawingCacheEnabled(true);
+		//获取缓存的bitmap
+		final TessBaseAPI baseApi = new TessBaseAPI();
+		//初始化OCR的训练数据路径与语言
 
-		Matrix matrix = new Matrix();
-		matrix.postScale(scaleWidth, scaleHeight);
-		Bitmap resizedBitmap = Bitmap.createBitmap(BitmapOrg, 0, 0, width, height, matrix, true);
-		return resizedBitmap;
+		boolean init = baseApi.init(Environment.getExternalStorageDirectory().getAbsolutePath(), DEFAULT_LANGUAGE);
+		//设置识别模式
+		baseApi.setPageSegMode(TessBaseAPI.PageSegMode.PSM_SINGLE_LINE);
+		//设置要识别的图片
+		baseApi.setImage(mBitmap);
+		String utf8Text = baseApi.getUTF8Text();
+		Pattern p = Pattern.compile(regEx);
+		Matcher m = p.matcher(utf8Text);
+		//替换与模式匹配的所有字符（即非数字的字符将被""替换）
+		mTvResult.setText(m.replaceAll("").trim());
+		baseApi.clear();
+		baseApi.end();
+
 	}
+
 
 	@Override
 	protected void onDestroy() {
