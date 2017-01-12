@@ -1,11 +1,9 @@
 package com.lavor.functionsdemo;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
-import android.graphics.Matrix;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -17,7 +15,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.SurfaceHolder;
@@ -25,12 +22,16 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.googlecode.tesseract.android.TessBaseAPI;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,7 +43,6 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 	private Camera camera;
 	private Display display;
 	private RectImageView mIvPhotoRect;
-	private int flag;
 	private byte[] mData;
 	private Bitmap mBitmap;
 	//识别语言英文
@@ -56,6 +56,10 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 
 		}
 	};
+	private boolean isFocused;
+	private Timer mTimer;
+	private TimerTask mTask;
+	private Rect mDrawRect;
 
 
 	@Override
@@ -83,7 +87,7 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 			holder.addCallback(this);// 为SurfaceView的句柄添加一个回调函数
 		}
 	}
-	
+
 	/**
 	 * 开始拍照时调用该方法
 	 * 2.3以后支持多摄像头，所以开启前可以通过getNumberOfCameras先获取摄像头数目，再通过 getCameraInfo得到需要开启的摄像头id，然后传入Open函数开启摄像头
@@ -95,20 +99,68 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 		try {
 			int cameraIndex = findBackCamera();
 			if (cameraIndex != -1) {
-				// 打开摄像头
-				camera = Camera.open(cameraIndex);
-				camera.setPreviewCallback(this);
-				camera.setPreviewCallback(mPreviewCallback);
-				camera.setPreviewDisplay(holder); // 设置用于显示拍照影像的SurfaceHolder对象
-				camera.setDisplayOrientation(0); // 相机自然的角度
-				camera.startPreview(); // 开始预览
+				initCamera(holder, cameraIndex);
+
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
 	}
-	
+
+	private void initCamera(SurfaceHolder holder, int cameraIndex) throws IOException {
+		// 打开摄像头
+		this.mTimer = new Timer();
+		if (this.mTask == null) {
+			this.mTask = new TimerTask() {
+				public void run() {
+					if (camera != null) {
+						try {
+							isFocused = false;
+							autoFocus();
+						} catch (Exception var2) {
+							var2.printStackTrace();
+						}
+					}
+				}
+			};
+		}
+
+		mTimer.schedule(mTask, 200, 25000);
+		camera = Camera.open(cameraIndex);
+		camera.setPreviewCallback(this);
+		camera.setPreviewCallback(mPreviewCallback);
+		camera.setPreviewDisplay(holder); // 设置用于显示拍照影像的SurfaceHolder对象
+		camera.setDisplayOrientation(0); // 相机自然的角度
+		camera.startPreview(); // 开始预览
+	}
+
+
+	public void autoFocus() {
+		if (this.camera != null) {
+			synchronized (this.camera) {
+				try {
+					if (this.camera.getParameters().getSupportedFocusModes() != null && this.camera.getParameters().getSupportedFocusModes().contains("auto")) {
+						this.camera.autoFocus(new Camera.AutoFocusCallback() {
+							public void onAutoFocus(boolean success, Camera camera) {
+								if (success) {
+									CameraActivity.this.isFocused = true;
+								}
+							}
+						});
+					} else {
+						Toast.makeText(this.getBaseContext(), "没有对焦功能", Toast.LENGTH_LONG).show();
+					}
+				} catch (Exception var4) {
+					var4.printStackTrace();
+					this.camera.stopPreview();
+					this.camera.startPreview();
+					Toast.makeText(this, "toast_autofocus_failure", Toast.LENGTH_LONG).show();
+				}
+			}
+		}
+	}
+
 	/**
 	 * 获取预览图像大小
 	 *
@@ -233,36 +285,40 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 	Handler mHandler = new Handler();
 
 	private synchronized void execute() {
-		flag++;
-		Rect drawRect = mIvPhotoRect.getDrawRect();
-		if (mData != null && mPoint != null && drawRect != null) {
+		Log.d(TAG, "execute: ");
+		mDrawRect = mIvPhotoRect.getDrawRect();
+
+		if (mData != null && mPoint != null && mDrawRect != null) {
 
 			Bitmap bitmap = BitmapFactory.decodeByteArray(mData, 0, mData.length);
-			if (bitmap != null) {
-				//截取
-				Bitmap rectBitmap = Bitmap.createScaledBitmap(bitmap, mPoint.x, mPoint.y, true);
-				mBitmap = Bitmap.createBitmap(rectBitmap, drawRect.top, drawRect.left, drawRect.width(), drawRect.height());
+			if (bitmap == null) return;
+			//截取
+			Bitmap rectBitmap = Bitmap.createScaledBitmap(bitmap, mPoint.x, mPoint.y, true);
+			mBitmap = Bitmap.createBitmap(rectBitmap, mDrawRect.top, mDrawRect.left, mDrawRect.width(), mDrawRect.height());
 
-				final Drawable drawable = new BitmapDrawable(getResources(), mBitmap);
-				mHandler.post(new Runnable() {
-					@Override
-					public void run() {
-						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-							mIvResult.setBackground(drawable);
-							EnglishOCR();
-						} else {
-							mIvResult.setBackgroundDrawable(drawable);
-						}
+			mHandler.post(new Runnable() {
+				@Override
+				public void run() {
+					Drawable drawable = new BitmapDrawable(getResources(), mBitmap);
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+						mIvResult.setBackground(drawable);
+					} else {
+						mIvResult.setBackgroundDrawable(drawable);
 					}
-				});
-			}
+					try {
+						exeEnglishOCR();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			});
 		}
-		flag--;
+
 	}
 
 	String regEx = "[^0-9]";
 
-	public void EnglishOCR() {
+	public void exeEnglishOCR() {
 		//设置图片可以缓存
 		mIvResult.setDrawingCacheEnabled(true);
 		//获取缓存的bitmap
@@ -278,16 +334,21 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 		Pattern p = Pattern.compile(regEx);
 		Matcher m = p.matcher(utf8Text);
 		//替换与模式匹配的所有字符（即非数字的字符将被""替换）
-		mTvResult.setText(m.replaceAll("").trim());
 		baseApi.clear();
 		baseApi.end();
 
+		String trim = m.replaceAll("").trim();
+		Toast.makeText(this, trim, Toast.LENGTH_LONG).show();
 	}
 
-
 	@Override
-	protected void onDestroy() {
-		super.onDestroy();
+	protected void onStop() {
+		super.onStop();
+		if (this.mTimer != null) {
+			this.mTimer.cancel();
+			this.mTimer = null;
+		}
+
 		if (camera != null) {
 			camera.stopPreview();
 			camera.release(); // 释放照相机

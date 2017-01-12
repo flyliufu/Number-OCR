@@ -1,4 +1,6 @@
 <resources>
     <string name="app_name">FunctionsDemo</string>
     <string name="title_activity_camera">CameraActivity</string>
+
+    <string name="camera_hint">请对准营业执照编号区域拍照</string>
 </resources>

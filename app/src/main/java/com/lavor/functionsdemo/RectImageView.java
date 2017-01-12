@@ -5,7 +5,11 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
+import android.graphics.Region;
+import android.graphics.Xfermode;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 
@@ -21,9 +25,11 @@ public class RectImageView extends ImageView {
 
 	{
 		mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-		mPaint.setStyle(Paint.Style.STROKE);
-		mPaint.setColor(Color.RED);
+		mPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+		mPaint.setColor(Color.BLACK);
+		mPaint.setAlpha(0xbb);
 		mPaint.setStrokeWidth(2f);
+		mPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OUT));
 	}
 
 	public RectImageView(Context context) {
@@ -54,6 +60,7 @@ public class RectImageView extends ImageView {
 		super.onDraw(canvas);
 
 		canvas.drawRect(mRect, mPaint);
+		canvas.drawRect(0, 0, getMeasuredWidth(), getMeasuredHeight(), mPaint);
 	}
 
 	public Rect getDrawRect() {
