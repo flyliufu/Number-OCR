@@ -10,13 +10,16 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Display;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -28,6 +31,8 @@ import android.widget.Toast;
 
 import com.googlecode.tesseract.android.TessBaseAPI;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Timer;
@@ -35,7 +40,7 @@ import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class CameraActivity extends AppCompatActivity implements SurfaceHolder.Callback, View.OnClickListener, Camera.PictureCallback, Camera.ShutterCallback, Camera.PreviewCallback {
+public class CameraActivity extends AppCompatActivity implements SurfaceHolder.Callback, View.OnClickListener, Camera.PictureCallback, Camera.ShutterCallback {
 	
 	private static final String TAG = "CameraActivity";
 	private SurfaceView mRvCamera;
@@ -50,15 +55,13 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 	private Point mPoint;
 	private ImageView mIvResult;
 	private TextView mTvResult;
+	private boolean isFinish = true;
 	private Camera.PreviewCallback mPreviewCallback = new Camera.PreviewCallback() {
 		@Override
 		public void onPreviewFrame(byte[] data, Camera camera) {
 
 		}
 	};
-	private boolean isFocused;
-	private Timer mTimer;
-	private TimerTask mTask;
 	private Rect mDrawRect;
 
 
@@ -78,6 +81,13 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 		mRvCamera = (SurfaceView) findViewById(R.id.sv_camera);
 		mIvPhotoRect = (RectImageView) findViewById(R.id.iv_photo_rect);
 		mTvResult = (TextView) findViewById(R.id.tv_result);
+		mIvPhotoRect.setOnTouchListener(new View.OnTouchListener() {
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				autoFocus();
+				return false;
+			}
+		});
 
 		findViewById(R.id.btn_take_photo).setOnClickListener(this);
 		holder = mRvCamera.getHolder();//获得句柄
@@ -109,26 +119,8 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 	}
 
 	private void initCamera(SurfaceHolder holder, int cameraIndex) throws IOException {
-		// 打开摄像头
-		this.mTimer = new Timer();
-		if (this.mTask == null) {
-			this.mTask = new TimerTask() {
-				public void run() {
-					if (camera != null) {
-						try {
-							isFocused = false;
-							autoFocus();
-						} catch (Exception var2) {
-							var2.printStackTrace();
-						}
-					}
-				}
-			};
-		}
 
-		mTimer.schedule(mTask, 200, 25000);
 		camera = Camera.open(cameraIndex);
-		camera.setPreviewCallback(this);
 		camera.setPreviewCallback(mPreviewCallback);
 		camera.setPreviewDisplay(holder); // 设置用于显示拍照影像的SurfaceHolder对象
 		camera.setDisplayOrientation(0); // 相机自然的角度
@@ -143,9 +135,6 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 					if (this.camera.getParameters().getSupportedFocusModes() != null && this.camera.getParameters().getSupportedFocusModes().contains("auto")) {
 						this.camera.autoFocus(new Camera.AutoFocusCallback() {
 							public void onAutoFocus(boolean success, Camera camera) {
-								if (success) {
-									CameraActivity.this.isFocused = true;
-								}
 							}
 						});
 					} else {
@@ -257,70 +246,77 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 	public void onPictureTaken(byte[] data, Camera camera) {
 		Log.d(TAG, "onPictureTaken: execute");
 		camera.startPreview();
-		this.mData = data;
-		TakePhotoThread thread = new TakePhotoThread();
-		thread.start();
+
+		if (isFinish) {
+			isFinish = false;
+			CameraActivity.this.mData = data;
+			exeTask();
+		}
 	}
 	
 	@Override
 	public void onShutter() {
 	}
-	
-	@Override
-	public void onPreviewFrame(byte[] data, Camera camera) {
-		Log.d(TAG, "onPreviewFrame: execute");
-	}
 
-	public class TakePhotoThread extends Thread {
-		@Override
-		public void run() {
-			try {
-				execute();
-			} catch (Exception e) {
-				e.printStackTrace();
+	private void exeTask() {
+
+		new AsyncTask<Void, Void, Boolean>() {
+			@Override
+			protected void onPreExecute() {
+				//设置图片可以缓存
+				mDrawRect = mIvPhotoRect.getDrawRect();
+				mIvResult.setDrawingCacheEnabled(true);
 			}
-		}
-	}
 
-	Handler mHandler = new Handler();
+			@Override
+			protected Boolean doInBackground(Void... params) {
 
-	private synchronized void execute() {
-		Log.d(TAG, "execute: ");
-		mDrawRect = mIvPhotoRect.getDrawRect();
+				if (mData != null && mPoint != null && mDrawRect != null) {
 
-		if (mData != null && mPoint != null && mDrawRect != null) {
+					Bitmap bitmap = BitmapFactory.decodeByteArray(mData, 0, mData.length);
+					if (bitmap == null) return false;
+					//截取
+					Bitmap rectBitmap = Bitmap.createScaledBitmap(bitmap, mPoint.x, mPoint.y, true);
+					mBitmap = Bitmap.createBitmap(rectBitmap, mDrawRect.left, mDrawRect.top, mDrawRect.width(), mDrawRect.height());
 
-			Bitmap bitmap = BitmapFactory.decodeByteArray(mData, 0, mData.length);
-			if (bitmap == null) return;
-			//截取
-			Bitmap rectBitmap = Bitmap.createScaledBitmap(bitmap, mPoint.x, mPoint.y, true);
-			mBitmap = Bitmap.createBitmap(rectBitmap, mDrawRect.top, mDrawRect.left, mDrawRect.width(), mDrawRect.height());
+					// Assume block needs to be inside a Try/Catch block.
+					String path = Environment.getExternalStorageDirectory().toString();
+					File file = new File(path, "pic.jpg"); // the File to save , append increasing numeric counter to prevent files from getting overwritten.
+					try {
+						FileOutputStream fOut = new FileOutputStream(file);
 
-			mHandler.post(new Runnable() {
-				@Override
-				public void run() {
+						mBitmap.compress(Bitmap.CompressFormat.JPEG, 85, fOut); // saving the Bitmap to a file compressed as a JPEG with 85% compression rate
+						fOut.flush(); // Not really required
+						fOut.close(); // do not forget to close the stream
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					return true;
+				}
+				return false;
+			}
+
+			@Override
+			protected void onPostExecute(Boolean isSuccess) {
+				isFinish = true;
+				Log.d(TAG, "onPostExecute: " + isSuccess);
+				if (isSuccess) {
+					String s = exeEnglishOCR();
 					Drawable drawable = new BitmapDrawable(getResources(), mBitmap);
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
 						mIvResult.setBackground(drawable);
 					} else {
 						mIvResult.setBackgroundDrawable(drawable);
 					}
-					try {
-						exeEnglishOCR();
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
+					Toast.makeText(CameraActivity.this, s, Toast.LENGTH_SHORT).show();
 				}
-			});
-		}
-
+			}
+		}.execute();
 	}
 
-	String regEx = "[^0-9]";
+	String regEx = "[^0-9A-Za-z]";
 
-	public void exeEnglishOCR() {
-		//设置图片可以缓存
-		mIvResult.setDrawingCacheEnabled(true);
+	public String exeEnglishOCR() {
 		//获取缓存的bitmap
 		final TessBaseAPI baseApi = new TessBaseAPI();
 		//初始化OCR的训练数据路径与语言
@@ -331,24 +327,32 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 		//设置要识别的图片
 		baseApi.setImage(mBitmap);
 		String utf8Text = baseApi.getUTF8Text();
+		String[] split = utf8Text.split(" ");
+		String result = null;
 		Pattern p = Pattern.compile(regEx);
-		Matcher m = p.matcher(utf8Text);
+		for (String str : split) {
+			if (str.length() >= 15) {
+				Matcher m = p.matcher(str);
+				result = m.replaceAll("").trim();
+			}
+		}
 		//替换与模式匹配的所有字符（即非数字的字符将被""替换）
 		baseApi.clear();
 		baseApi.end();
-
-		String trim = m.replaceAll("").trim();
-		Toast.makeText(this, trim, Toast.LENGTH_LONG).show();
+		if (result != null) {
+			return result;
+		}
+		return null;
 	}
 
-	@Override
-	protected void onStop() {
-		super.onStop();
-		if (this.mTimer != null) {
-			this.mTimer.cancel();
-			this.mTimer = null;
-		}
 
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		release();
+	}
+
+	private void release() {
 		if (camera != null) {
 			camera.stopPreview();
 			camera.release(); // 释放照相机

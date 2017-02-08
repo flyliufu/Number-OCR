@@ -8,8 +8,6 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.Region;
-import android.graphics.Xfermode;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 
@@ -48,8 +46,8 @@ public class RectImageView extends ImageView {
 	@SuppressLint("DrawAllocation")
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-		int width = getContext().getResources().getDimensionPixelSize(R.dimen.d150);
-		int height = getContext().getResources().getDimensionPixelSize(R.dimen.d25);
+		int width = getContext().getResources().getDimensionPixelSize(R.dimen.d115);
+		int height = getContext().getResources().getDimensionPixelSize(R.dimen.d22);
 		int halfHeight = getMeasuredHeight() / 2;
 		int halfWidth = getMeasuredWidth() / 2;
 		mRect = new Rect(halfWidth - width, halfHeight - height, halfWidth + width, halfHeight + height);

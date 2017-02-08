@@ -2,5 +2,9 @@
     <string name="app_name">FunctionsDemo</string>
     <string name="title_activity_camera">CameraActivity</string>
 
-    <string name="camera_hint">请对准营业执照编号区域拍照</string>
+    <string name="camera_hint">请对准统一社会信用代码区域拍照</string>
+    <string name="camera_error1">无法打开照相机，请检查</string>
+    <string name="take_photo">重拍</string>
+    <string name="confirm_number">确认编号</string>
+    <string name="submit">下一步</string>
 </resources>

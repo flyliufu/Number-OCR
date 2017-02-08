@@ -17,11 +17,11 @@ public class App extends Application {
 
 	public static App getApp() {
 		if (mInstance != null && mInstance instanceof App) {
-			return (App) mInstance;
+			return mInstance;
 		} else {
 			mInstance = new App();
 			mInstance.onCreate();
-			return (App) mInstance;
+			return mInstance;
 		}
 	}
 
