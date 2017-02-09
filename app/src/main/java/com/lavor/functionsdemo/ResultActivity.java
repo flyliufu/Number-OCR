@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -14,19 +13,13 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 
-import com.googlecode.tesseract.android.TessBaseAPI;
-
 import java.io.File;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author liufu on 2017/2/3.
  */
 
 public class ResultActivity extends AppCompatActivity implements View.OnClickListener {
-	//识别语言英文
-	static final String DEFAULT_LANGUAGE = "eng";
 	private EditText mEtResult;
 	private ImageView mIvResult;
 
@@ -45,6 +38,17 @@ public class ResultActivity extends AppCompatActivity implements View.OnClickLis
 		findViewById(R.id.btn_retake).setOnClickListener(this);
 		findViewById(R.id.btn_submit).setOnClickListener(this);
 
+		String result = getIntent().getStringExtra("result");
+		int length = result.length();
+		int a = length % 4 == 0 ? length / 4 : length / 4 + 1;
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < a; i++) {
+			int e = (i + 1) * 4;
+			if (e > result.length()) e = length;
+			sb.append(result.substring(i * 4, e));
+			sb.append("	");
+		}
+		mEtResult.setText(sb.toString());
 		File parent = Environment.getExternalStorageDirectory();
 		File pic = new File(parent, "pic.jpg");
 		Bitmap mBitmap = BitmapFactory.decodeFile(pic.getPath());

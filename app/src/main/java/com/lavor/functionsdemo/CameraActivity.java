@@ -1,6 +1,7 @@
 package com.lavor.functionsdemo;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
@@ -15,6 +16,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Message;
 import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -127,6 +129,19 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 		camera.startPreview(); // 开始预览
 	}
 
+	private Handler mHandler = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			camera.takePicture(CameraActivity.this, null, CameraActivity.this);
+			mHandler.sendEmptyMessageDelayed(0, 1000);
+		}
+	};
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		mHandler.removeCallbacksAndMessages(null);
+	}
 
 	public void autoFocus() {
 		if (this.camera != null) {
@@ -231,6 +246,8 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
 		setParameter();
 		camera.startPreview();
+
+		mHandler.sendEmptyMessageDelayed(0, 3000);
 	}
 	
 	@Override
@@ -302,13 +319,22 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 				Log.d(TAG, "onPostExecute: " + isSuccess);
 				if (isSuccess) {
 					String s = exeEnglishOCR();
-					Drawable drawable = new BitmapDrawable(getResources(), mBitmap);
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-						mIvResult.setBackground(drawable);
-					} else {
-						mIvResult.setBackgroundDrawable(drawable);
+					if (s != null && s.length() > 15) {
+						Drawable drawable = new BitmapDrawable(getResources(), mBitmap);
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+							mIvResult.setBackground(drawable);
+						} else {
+							mIvResult.setBackgroundDrawable(drawable);
+						}
+
+						mHandler.removeCallbacksAndMessages(null);
+						release();
+
+						Intent intent = new Intent(CameraActivity.this, ResultActivity.class);
+						intent.putExtra("result", s);
+						startActivity(intent);
+						finish();
 					}
-					Toast.makeText(CameraActivity.this, s, Toast.LENGTH_SHORT).show();
 				}
 			}
 		}.execute();
