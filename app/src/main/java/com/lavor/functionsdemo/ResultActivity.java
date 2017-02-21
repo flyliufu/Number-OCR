@@ -13,15 +13,41 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import com.lavor.functionsdemo.bean.EnterpriseInfo;
+import com.lavor.functionsdemo.bean.JSONEntity;
+
 import java.io.File;
+
+import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 /**
  * @author liufu on 2017/2/3.
  */
 
 public class ResultActivity extends AppCompatActivity implements View.OnClickListener {
+
 	private EditText mEtResult;
 	private ImageView mIvResult;
+	private Observer<JSONEntity<EnterpriseInfo>> mQueryObserver = new Observer<JSONEntity<EnterpriseInfo>>() {
+		@Override
+		public void onCompleted() {
+
+		}
+
+		@Override
+		public void onError(Throwable e) {
+
+		}
+
+		@Override
+		public void onNext(JSONEntity<EnterpriseInfo> e) {
+			if ("0000".equals(e.getCode())) {
+				EnterpriseInfo result = e.getResult();
+			}
+		}
+	};
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -48,6 +74,11 @@ public class ResultActivity extends AppCompatActivity implements View.OnClickLis
 			sb.append(result.substring(i * 4, e));
 			sb.append("	");
 		}
+
+		App.getHttpAPI().query("posboss", result).subscribeOn(Schedulers.io())
+				.observeOn(AndroidSchedulers.mainThread())
+				.subscribe(mQueryObserver);
+
 		mEtResult.setText(sb.toString());
 		File parent = Environment.getExternalStorageDirectory();
 		File pic = new File(parent, "pic.jpg");
