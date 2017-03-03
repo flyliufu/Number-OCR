@@ -6,5 +6,6 @@
     <string name="camera_error1">无法打开照相机，请检查</string>
     <string name="take_photo">重拍</string>
     <string name="confirm_number">确认编号</string>
-    <string name="submit">下一步</string>
+    <string name="submit">查询</string>
+    <string name="result" formatted="false">名称：%s\n类型：%s\n地址：%s\n法人代表：%s\n注册资本：%s\n成立日期：%s\n营业期限：%s-%s\n经营范围：%s\n</string>
 </resources>

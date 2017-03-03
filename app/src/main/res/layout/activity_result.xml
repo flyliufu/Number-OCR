@@ -1,63 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:background="@color/background"
-              android:orientation="vertical"
-              tools:context="com.lavor.functionsdemo.ResultActivity">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    tools:context="com.lavor.functionsdemo.ResultActivity"
+    >
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/d50"
-        android:background="#FFF">
-
-        <ImageView
-            android:id="@+id/btn_retake"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:background="@drawable/ic_back"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="@string/confirm_number"
-            android:textColor="#000"
-            android:textSize="17sp"
-            android:textStyle="bold"/>
-    </RelativeLayout>
+  <RelativeLayout
+      android:id="@+id/header"
+      android:layout_width="match_parent"
+      android:layout_height="@dimen/d50"
+      android:background="#FFF"
+      >
 
     <ImageView
-        android:id="@+id/iv_result"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/d65"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginLeft="@dimen/d15"
-        android:layout_marginRight="@dimen/d15"
-        android:layout_marginTop="@dimen/d30"/>
-
-    <EditText
-        android:id="@+id/et_result"
+        android:id="@+id/btn_retake"
         android:layout_width="wrap_content"
-        android:layout_height="@dimen/d50"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="@dimen/d15"
-        android:background="#FFFFFFFF"
-        android:paddingLeft="@dimen/d15"
-        android:paddingRight="@dimen/d15"
-        android:textSize="18sp"/>
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:background="@drawable/ic_back"
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="@string/confirm_number"
+        android:textColor="#000"
+        android:textSize="17sp"
+        android:textStyle="bold"
+        />
+  </RelativeLayout>
+
+  <ImageView
+      android:id="@+id/iv_result"
+      android:layout_width="match_parent"
+      android:layout_height="@dimen/d65"
+      android:layout_below="@id/header"
+      android:layout_gravity="center_horizontal"
+      android:layout_marginLeft="@dimen/d15"
+      android:layout_marginRight="@dimen/d15"
+      android:layout_marginTop="@dimen/d30"
+      />
+
+  <EditText
+      android:id="@+id/et_result"
+      android:layout_width="wrap_content"
+      android:layout_height="@dimen/d50"
+      android:layout_below="@+id/iv_result"
+      android:layout_centerHorizontal="true"
+      android:layout_gravity="center_horizontal"
+      android:layout_marginTop="@dimen/d15"
+      android:background="#FFFFFFFF"
+      android:paddingLeft="@dimen/d15"
+      android:paddingRight="@dimen/d15"
+      android:textSize="18sp"
+      />
+  <Button
+      android:id="@+id/btn_submit"
+      android:layout_width="match_parent"
+      android:layout_height="@dimen/d40"
+      android:layout_alignParentBottom="true"
+      android:layout_marginBottom="@dimen/d15"
+      android:layout_marginLeft="@dimen/d15"
+      android:layout_marginRight="@dimen/d15"
+      android:background="@drawable/shape_button_background"
+      android:text="@string/submit"
+      android:textColor="#fff"
+      />
+  <TextView
+      android:id="@+id/tv_result"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:layout_above="@id/btn_submit"
+      android:layout_below="@id/et_result"
+      android:layout_margin="@dimen/d15"
+      android:maxLines="10"
+      android:scrollbars="vertical"
+      android:textColor="#000"
+      android:textSize="18sp"
+      />
 
 
-    <Button
-        android:id="@+id/btn_submit"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/d40"
-        android:layout_marginLeft="@dimen/d15"
-        android:layout_marginRight="@dimen/d15"
-        android:layout_marginTop="@dimen/d30"
-        android:background="@drawable/shape_button_background"
-        android:text="@string/submit"
-        android:textColor="#fff"/>
-</LinearLayout>
+</RelativeLayout>

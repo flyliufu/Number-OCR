@@ -91,7 +91,7 @@ public class App extends Application {
 					  .addConverterFactory(GsonConverterFactory.create())
 					  .addCallAdapterFactory(RxJavaCallAdapterFactory.create());
 
-	private static String URL = "http://10.10.111.123:8082/EnterpriseInfoService";
+	private static String URL = "https://v.lefu8.com/custserver/";
 
 	public static HttpAPI getHttpAPI() {
 		if (mHttpAPI == null) {

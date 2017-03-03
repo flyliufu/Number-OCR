@@ -13,6 +13,6 @@ import rx.Observable;
 
 public interface HttpAPI {
 
-	@GET("enterprise/findEnterpriseInfo")
+	@GET("enterprise/getRealInfo.json")
 	Observable<JSONEntity<EnterpriseInfo>> query(@Query("source") String source, @Query("businessLicenseNo") String businessLicenseNo);
 }
