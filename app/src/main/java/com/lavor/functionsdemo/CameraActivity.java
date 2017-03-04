@@ -20,17 +20,15 @@ import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Display;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
-
 import com.googlecode.tesseract.android.TessBaseAPI;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -54,7 +52,6 @@ public class CameraActivity extends AppCompatActivity
   static final String DEFAULT_LANGUAGE = "eng";
   private Point mPoint;
   private ImageView mIvResult;
-  private TextView mTvResult;
   private boolean isFinish = true;
   private Camera.PreviewCallback mPreviewCallback = new Camera.PreviewCallback() {
     @Override public void onPreviewFrame(byte[] data, Camera camera) {
@@ -68,14 +65,43 @@ public class CameraActivity extends AppCompatActivity
     }
   };
   private Rect mDrawRect;
+  private boolean isPause;
 
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_camera);
+    Log.d(TAG, "onCreate: ");
     initViews();
   }
 
+  private AsyncTask<Void, Void, Boolean> asyncTask = new AsyncTask<Void, Void, Boolean>() {
+    @Override protected Boolean doInBackground(Void... params) {
+      Log.d(TAG, "doInBackground: ");
+      try {
+        new FileIOThread(getBaseContext()).run();
+      } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+      }
+      return true;
+    }
+
+    @Override protected void onPostExecute(Boolean aBoolean) {
+      Log.d(TAG, "onPostExecute: ");
+      App.setFlag(getApplicationContext(), aBoolean);
+      if (aBoolean) {
+        Toast.makeText(getApplicationContext(), "初始化成功", Toast.LENGTH_LONG).show();
+      } else {
+        finish();
+      }
+    }
+  };
+
   private void initViews() {
+    Log.d(TAG, "initViews: ");
+    if (!App.getFlag()) {
+      asyncTask.execute();
+    }
 
     // 获取屏幕信息
     WindowManager mManger = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
@@ -83,7 +109,6 @@ public class CameraActivity extends AppCompatActivity
     mIvResult = (ImageView) findViewById(R.id.iv_result);
     mRvCamera = (SurfaceView) findViewById(R.id.sv_camera);
     mIvPhotoRect = (RectImageView) findViewById(R.id.iv_photo_rect);
-    mTvResult = (TextView) findViewById(R.id.tv_result);
     mIvPhotoRect.setOnTouchListener(new View.OnTouchListener() {
       @Override public boolean onTouch(View v, MotionEvent event) {
         autoFocus();
@@ -105,6 +130,7 @@ public class CameraActivity extends AppCompatActivity
    * 2.3以后支持多摄像头，所以开启前可以通过getNumberOfCameras先获取摄像头数目，再通过 getCameraInfo得到需要开启的摄像头id，然后传入Open函数开启摄像头
    */
   @Override public void surfaceCreated(SurfaceHolder holder) {
+    Log.d(TAG, "surfaceCreated: ");
     openCamera(holder);
   }
 
@@ -120,10 +146,11 @@ public class CameraActivity extends AppCompatActivity
   }
 
   private void initCamera(SurfaceHolder holder, int cameraIndex) throws IOException {
+    Log.d(TAG, "initCamera: ");
     release();
 
     camera = Camera.open(cameraIndex);
-    camera.setPreviewCallback(mPreviewCallback);
+    // camera.setPreviewCallback(mPreviewCallback);
     camera.setPreviewDisplay(holder); // 设置用于显示拍照影像的SurfaceHolder对象
     camera.setDisplayOrientation(0); // 相机自然的角度
   }
@@ -136,11 +163,14 @@ public class CameraActivity extends AppCompatActivity
   };
 
   @Override protected void onPause() {
+    Log.d(TAG, "onPause: ");
     super.onPause();
-    mHandler.removeCallbacksAndMessages(null);
+    isPause = true;
+    // mHandler.removeCallbacksAndMessages(null);
   }
 
   public void autoFocus() {
+    Log.d(TAG, "autoFocus: ");
     if (this.camera != null) {
       synchronized (this.camera) {
         try {
@@ -167,6 +197,7 @@ public class CameraActivity extends AppCompatActivity
    * 获取预览图像大小
    */
   private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
+    Log.d(TAG, "getOptimalPreviewSize: ");
     final double ASPECT_TOLERANCE = 0.1;
     double targetRatio = (double) h / w;
 
@@ -196,6 +227,12 @@ public class CameraActivity extends AppCompatActivity
       }
     }
     return optimalSize;
+  }
+
+  @Override protected void onResume() {
+    Log.d(TAG, "onResume: ");
+    super.onResume();
+    isPause = false;
   }
 
   /**
@@ -238,13 +275,19 @@ public class CameraActivity extends AppCompatActivity
   }
 
   @Override public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-    setParameter();
-    camera.startPreview();
+    Log.d(TAG, "surfaceChanged: ");
+    if (!isPause) {
+
+      setParameter();
+      camera.startPreview();
+    }
 
     // mHandler.sendEmptyMessageDelayed(0, 3000);
   }
 
   @Override public void surfaceDestroyed(SurfaceHolder holder) {
+    Log.d(TAG, "surfaceDestroyed: ");
+    release();
   }
 
   @Override public void onClick(View v) {
@@ -317,8 +360,8 @@ public class CameraActivity extends AppCompatActivity
         isFinish = true;
         Log.d(TAG, "onPostExecute: " + isSuccess);
         if (isSuccess) {
-          String s = exeEnglishOCR();
-          if (s != null && s.length() > 15) {
+          String s = check(exeEnglishOCR());
+          if (s != null && (s.length() == 15 || s.length() == 18)) {
             Drawable drawable = new BitmapDrawable(getResources(), mBitmap);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
               mIvResult.setBackground(drawable);
@@ -331,11 +374,28 @@ public class CameraActivity extends AppCompatActivity
             Intent intent = new Intent(CameraActivity.this, ResultActivity.class);
             intent.putExtra("result", s);
             startActivity(intent);
-            finish();
+          } else {
+            Toast.makeText(getBaseContext(), "识别有误，请重新拍照", Toast.LENGTH_SHORT).show();
           }
         }
       }
     }.execute();
+  }
+
+  private String check(String str) {
+    return str.replaceAll("\t", "")
+        .replace(" ", "")
+        .replace("\n", "")
+        .replace("V", "")
+        .replace("v", "")
+        .replace("S", "5")
+        .replace("s", "5")
+        .replace("I", "1")
+        .replace("i", "1")
+        .replace("z", "2")
+        .replace("Z", "2")
+        .replace("o", "0")
+        .replace("O", "0");
   }
 
   String regEx = "[^0-9A-Za-z]";
@@ -371,8 +431,16 @@ public class CameraActivity extends AppCompatActivity
   }
 
   @Override protected void onDestroy() {
+    Log.d(TAG, "onDestroy: ");
     super.onDestroy();
     release();
+  }
+
+  @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
+    if (KeyEvent.KEYCODE_BACK == keyCode) {
+      release();
+    }
+    return super.onKeyDown(keyCode, event);
   }
 
   private void release() {

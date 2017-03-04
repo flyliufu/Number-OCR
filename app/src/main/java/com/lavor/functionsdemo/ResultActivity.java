@@ -10,6 +10,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -30,7 +32,7 @@ import rx.schedulers.Schedulers;
  */
 
 public class ResultActivity extends AppCompatActivity
-    implements View.OnClickListener, View.OnFocusChangeListener {
+    implements View.OnClickListener, View.OnFocusChangeListener, TextWatcher {
 
   private static final String TAG = "ResultActivity";
   private EditText mEtResult;
@@ -64,7 +66,6 @@ public class ResultActivity extends AppCompatActivity
 
   @Override public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-
     setContentView(R.layout.activity_result);
 
     initViews();
@@ -78,19 +79,20 @@ public class ResultActivity extends AppCompatActivity
     findViewById(R.id.btn_submit).setOnClickListener(this);
     mEtResult.setOnFocusChangeListener(this);
     result = getIntent().getStringExtra("result");
-    mEtResult.setText(result);
+    // mEtResult.setText(result);
 
-    //		int length = result.length();
-    //		int a = length % 4 == 0 ? length / 4 : length / 4 + 1;
-    //		StringBuffer sb = new StringBuffer();
-    //		for (int i = 0; i < a; i++) {
-    //			int e = (i + 1) * 4;
-    //			if (e > result.length()) e = length;
-    //			sb.append(result.substring(i * 4, e));
-    //			sb.append("	");
-    //		}
-    //
-    //		mEtResult.setText(sb.toString());
+    int length = result.length();
+    int a = length % 4 == 0 ? length / 4 : length / 4 + 1;
+    StringBuffer sb = new StringBuffer();
+    for (int i = 0; i < a; i++) {
+      int e = (i + 1) * 4;
+      if (e > result.length()) e = length;
+      sb.append(result.substring(i * 4, e));
+      sb.append("	");
+    }
+
+    mEtResult.setText(sb.toString());
+    mEtResult.addTextChangedListener(this);
     File parent = Environment.getExternalStorageDirectory();
     File pic = new File(parent, "pic.jpg");
     Bitmap mBitmap = BitmapFactory.decodeFile(pic.getPath());
@@ -108,8 +110,7 @@ public class ResultActivity extends AppCompatActivity
   }
 
   private void query() {
-    result = mEtResult.getText().toString();
-
+    result = check(mEtResult.getText().toString());
     App.getHttpAPI()
         .query("posboss", result)
         .subscribeOn(Schedulers.io())
@@ -117,14 +118,16 @@ public class ResultActivity extends AppCompatActivity
         .subscribe(mQueryObserver);
   }
 
-  @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
-    if (keyCode == KeyEvent.KEYCODE_BACK) {
-      Intent intent = new Intent(this, CameraActivity.class);
-      startActivity(intent);
-      finish();
-      return true;
-    }
-    return super.onKeyDown(keyCode, event);
+  private String check(String str) {
+    return str.replaceAll("\t", "")
+        .replace(" ", "")
+        .replace("\n", "")
+        .replace("I", "1")
+        .replace("i", "1")
+        .replace("z", "2")
+        .replace("Z", "2")
+        .replace("o", "0")
+        .replace("O", "0");
   }
 
   @Override public void onClick(View v) {
@@ -144,5 +147,17 @@ public class ResultActivity extends AppCompatActivity
     if (hasFocus) {
 
     }
+  }
+
+  @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+  }
+
+  @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+  }
+
+  @Override public void afterTextChanged(Editable s) {
+
   }
 }
