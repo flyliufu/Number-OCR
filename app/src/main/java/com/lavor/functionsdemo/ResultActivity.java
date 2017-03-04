@@ -1,5 +1,6 @@
 package com.lavor.functionsdemo;
 
+import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -16,12 +17,10 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
-
+import android.widget.Toast;
 import com.lavor.functionsdemo.bean.EnterpriseInfo;
 import com.lavor.functionsdemo.bean.JSONEntity;
-
 import java.io.File;
-
 import rx.Observer;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
@@ -49,13 +48,18 @@ public class ResultActivity extends AppCompatActivity
         @Override public void onNext(JSONEntity<EnterpriseInfo> e) {
           if ("0000".equals(e.getCode())) {
             EnterpriseInfo r = e.getResult();
-            mTvResult.setText(getString(R.string.result, r.getEnterpriseName(), r.getCompanyType(),
+            String string = getString(R.string.result, r.getEnterpriseName(), r.getCompanyType(),
                 r.getAddress(), r.getLegalPerson(), r.getRegisteredCapital(), r.getCreationDate(),
-                r.getStartDate(), r.getEndDate(), r.getBusinessScope()));
+                r.getStartDate(), r.getEndDate(), r.getBusinessScope(),
+                r.getRegistrationAuthority());
+            Intent intent = new Intent(getApplicationContext(), DialogActivity.class);
+            intent.putExtra("str", string);
+            startActivity(intent);
+          } else {
+            Toast.makeText(getApplicationContext(), e.getMsg(), Toast.LENGTH_SHORT).show();
           }
         }
       };
-  private TextView mTvResult;
   private String result;
 
   @Override public void onCreate(Bundle savedInstanceState) {
@@ -69,7 +73,7 @@ public class ResultActivity extends AppCompatActivity
   private void initViews() {
     mIvResult = (ImageView) findViewById(R.id.iv_result);
     mEtResult = (EditText) findViewById(R.id.et_result);
-    mTvResult = (TextView) findViewById(R.id.tv_result);
+
     findViewById(R.id.btn_retake).setOnClickListener(this);
     findViewById(R.id.btn_submit).setOnClickListener(this);
     mEtResult.setOnFocusChangeListener(this);
@@ -92,7 +96,6 @@ public class ResultActivity extends AppCompatActivity
     Bitmap mBitmap = BitmapFactory.decodeFile(pic.getPath());
     if (mBitmap != null) {
 
-      mTvResult.setMovementMethod(new ScrollingMovementMethod());
       Drawable drawable = new BitmapDrawable(getResources(), mBitmap);
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
         mIvResult.setBackground(drawable);

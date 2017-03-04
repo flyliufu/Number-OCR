@@ -69,18 +69,5 @@
       android:text="@string/submit"
       android:textColor="#fff"
       />
-  <TextView
-      android:id="@+id/tv_result"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:layout_above="@id/btn_submit"
-      android:layout_below="@id/et_result"
-      android:layout_margin="@dimen/d15"
-      android:maxLines="10"
-      android:scrollbars="vertical"
-      android:textColor="#000"
-      android:textSize="18sp"
-      />
-
 
 </RelativeLayout>
