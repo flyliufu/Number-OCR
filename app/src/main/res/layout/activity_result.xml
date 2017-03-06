@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -44,19 +45,6 @@
       android:layout_marginTop="@dimen/d30"
       />
 
-  <EditText
-      android:id="@+id/et_result"
-      android:layout_width="wrap_content"
-      android:layout_height="@dimen/d50"
-      android:layout_below="@+id/iv_result"
-      android:layout_centerHorizontal="true"
-      android:layout_gravity="center_horizontal"
-      android:layout_marginTop="@dimen/d15"
-      android:background="#FFFFFFFF"
-      android:paddingLeft="@dimen/d15"
-      android:paddingRight="@dimen/d15"
-      android:textSize="18sp"
-      />
   <Button
       android:id="@+id/btn_submit"
       android:layout_width="match_parent"
@@ -69,5 +57,28 @@
       android:text="@string/submit"
       android:textColor="#fff"
       />
+
+  <android.support.design.widget.TextInputLayout
+      android:id="@+id/til_hint"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_below="@+id/iv_result"
+      android:layout_centerHorizontal="true"
+      android:layout_marginTop="15dp"
+      >
+
+    <EditText
+        android:id="@+id/et_result"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/d50"
+        android:layout_gravity="center_horizontal"
+        android:background="#FFFFFFFF"
+        android:digits="@string/digits"
+        android:maxLength="18"
+        android:paddingLeft="@dimen/d15"
+        android:paddingRight="@dimen/d15"
+        android:textSize="18sp"
+        />
+  </android.support.design.widget.TextInputLayout>
 
 </RelativeLayout>

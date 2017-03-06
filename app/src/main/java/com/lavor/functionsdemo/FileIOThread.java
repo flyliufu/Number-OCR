@@ -7,7 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class FileIOThread implements Runnable {
+public class FileIOThread {
 
   private final Context mContext;
 
@@ -17,8 +17,15 @@ public class FileIOThread implements Runnable {
 
   private void copyFile() {
     File file = new File(Environment.getExternalStorageDirectory(), "tessdata");
-    boolean createSuccess = file.mkdirs();
-    if (!createSuccess) return;
+    if (!file.exists()) {
+      boolean createSuccess = file.mkdirs();
+      if (!createSuccess) {
+        throw new RuntimeException("Create tessdata failed!");
+      }
+      if (!file.isDirectory()) {
+        throw new RuntimeException("Tessdata isn't a directory!");
+      }
+    }
 
     InputStream inputStream = null;
     FileOutputStream fileOutputStream = null;
@@ -39,7 +46,7 @@ public class FileIOThread implements Runnable {
         fileOutputStream.write(buffer, 0, count);
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e.getMessage());
     } finally {
       // 最后关闭就可以了
       try {
@@ -56,7 +63,7 @@ public class FileIOThread implements Runnable {
     }
   }
 
-  @Override public void run() {
+  public void run() {
     copyFile();
   }
 }

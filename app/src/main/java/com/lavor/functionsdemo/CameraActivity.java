@@ -9,11 +9,8 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -55,8 +52,8 @@ public class CameraActivity extends AppCompatActivity
   private boolean isFinish = true;
   private Camera.PreviewCallback mPreviewCallback = new Camera.PreviewCallback() {
     @Override public void onPreviewFrame(byte[] data, Camera camera) {
-      if (isFinish && !isPause && isOk) {
-        isOk = false;
+      //if (isFinish && !isPause && isOk) {
+      if (isFinish && !isPause) {
         Log.d(TAG, "onPreviewFrame: ");
         isFinish = false;
         mData = data;
@@ -71,7 +68,6 @@ public class CameraActivity extends AppCompatActivity
   private Handler mHandler = new Handler() {
     @Override public void handleMessage(Message msg) {
       isOk = true;
-      mHandler.sendEmptyMessageDelayed(0, 1500);
     }
   };
 
@@ -82,34 +78,8 @@ public class CameraActivity extends AppCompatActivity
     initViews();
   }
 
-  private AsyncTask<Void, Void, Boolean> asyncTask = new AsyncTask<Void, Void, Boolean>() {
-    @Override protected Boolean doInBackground(Void... params) {
-      Log.d(TAG, "doInBackground: ");
-      try {
-        new FileIOThread(getBaseContext()).run();
-      } catch (Exception e) {
-        e.printStackTrace();
-        return false;
-      }
-      return true;
-    }
-
-    @Override protected void onPostExecute(Boolean aBoolean) {
-      Log.d(TAG, "onPostExecute: ");
-      App.setFlag(getApplicationContext(), aBoolean);
-      if (aBoolean) {
-        Toast.makeText(getApplicationContext(), "初始化成功", Toast.LENGTH_LONG).show();
-      } else {
-        finish();
-      }
-    }
-  };
-
   private void initViews() {
     Log.d(TAG, "initViews: ");
-    if (!App.getFlag()) {
-      asyncTask.execute();
-    }
 
     // 获取屏幕信息
     WindowManager mManger = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
@@ -166,6 +136,7 @@ public class CameraActivity extends AppCompatActivity
   @Override protected void onPause() {
     Log.d(TAG, "onPause: ");
     super.onPause();
+    isOk = false;
     isPause = true;
     release();
   }
@@ -235,7 +206,7 @@ public class CameraActivity extends AppCompatActivity
     super.onResume();
     isFinish = true;
     isPause = false;
-    mHandler.sendEmptyMessageDelayed(0, 1500);
+    mHandler.sendEmptyMessageDelayed(0, 500);
   }
 
   /**

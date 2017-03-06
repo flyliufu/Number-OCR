@@ -5,46 +5,51 @@
     android:id="@+id/content_camera"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.lavor.functionsdemo.CameraActivity">
+    tools:context="com.lavor.functionsdemo.CameraActivity"
+    >
 
-    <SurfaceView
-        android:id="@+id/sv_camera"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center"/>
+  <SurfaceView
+      android:id="@+id/sv_camera"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:layout_gravity="center"
+      />
 
-    <com.lavor.functionsdemo.RectImageView
-        android:id="@+id/iv_photo_rect"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+  <com.lavor.functionsdemo.RectImageView
+      android:id="@+id/iv_photo_rect"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      />
 
-    <ImageView
-        android:id="@+id/iv_result"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="@dimen/d25"/>
+  <ImageView
+      android:id="@+id/iv_result"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_centerHorizontal="true"
+      android:layout_marginTop="@dimen/d25"
+      />
 
-    <TextView
-        android:id="@+id/tv_result"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_gravity="bottom"
-        android:layout_marginBottom="@dimen/d45"
-        android:text="@string/camera_hint"
-        android:textColor="#f00"
-        android:textSize="20sp"/>
+  <TextView
+      android:id="@+id/tv_result"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignParentBottom="true"
+      android:layout_centerHorizontal="true"
+      android:layout_gravity="bottom"
+      android:layout_marginBottom="@dimen/d45"
+      android:text="@string/camera_hint"
+      android:textColor="#f00"
+      android:textSize="20sp"
+      />
 
-    <ImageButton
-        android:id="@+id/btn_take_photo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
-        android:layout_marginRight="@dimen/d30"
-        android:background="@drawable/selector_take_photo"/>
-
-
+  <ImageButton
+      android:id="@+id/btn_take_photo"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignParentRight="true"
+      android:layout_centerVertical="true"
+      android:layout_marginRight="@dimen/d30"
+      android:background="@drawable/selector_take_photo"
+      android:visibility="gone"
+      />
 </RelativeLayout>

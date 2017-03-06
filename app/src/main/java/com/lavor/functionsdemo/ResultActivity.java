@@ -1,6 +1,5 @@
 package com.lavor.functionsdemo;
 
-import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -9,20 +8,20 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 import com.lavor.functionsdemo.bean.EnterpriseInfo;
 import com.lavor.functionsdemo.bean.JSONEntity;
 import java.io.File;
+import java.util.Arrays;
 import rx.Observer;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
@@ -63,6 +62,7 @@ public class ResultActivity extends AppCompatActivity
         }
       };
   private String result;
+  private TextInputLayout mTilHint;
 
   @Override public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -74,25 +74,26 @@ public class ResultActivity extends AppCompatActivity
   private void initViews() {
     mIvResult = (ImageView) findViewById(R.id.iv_result);
     mEtResult = (EditText) findViewById(R.id.et_result);
+    mTilHint = (TextInputLayout) findViewById(R.id.til_hint);
 
     findViewById(R.id.btn_retake).setOnClickListener(this);
     findViewById(R.id.btn_submit).setOnClickListener(this);
-    mEtResult.setOnFocusChangeListener(this);
     result = getIntent().getStringExtra("result");
-    // mEtResult.setText(result);
-
-    int length = result.length();
-    int a = length % 4 == 0 ? length / 4 : length / 4 + 1;
-    StringBuffer sb = new StringBuffer();
-    for (int i = 0; i < a; i++) {
-      int e = (i + 1) * 4;
-      if (e > result.length()) e = length;
-      sb.append(result.substring(i * 4, e));
-      sb.append("	");
-    }
-
-    mEtResult.setText(sb.toString());
+    mEtResult.setText(result);
     mEtResult.addTextChangedListener(this);
+
+    //int length = result.length();
+    //int a = length % 4 == 0 ? length / 4 : length / 4 + 1;
+    //StringBuffer sb = new StringBuffer();
+    //for (int i = 0; i < a; i++) {
+    //  int e = (i + 1) * 4;
+    //  if (e > result.length()) e = length;
+    //  sb.append(result.substring(i * 4, e));
+    //  sb.append("	");
+    //}
+    //mEtResult.setText(sb.toString());
+    //mEtResult.setOnFocusChangeListener(this);
+
     File parent = Environment.getExternalStorageDirectory();
     File pic = new File(parent, "pic.jpg");
     Bitmap mBitmap = BitmapFactory.decodeFile(pic.getPath());
@@ -106,7 +107,7 @@ public class ResultActivity extends AppCompatActivity
       }
     }
 
-    query();
+    // query();
   }
 
   private void query() {
@@ -127,7 +128,8 @@ public class ResultActivity extends AppCompatActivity
         .replace("z", "2")
         .replace("Z", "2")
         .replace("o", "0")
-        .replace("O", "0");
+        .replace("O", "0")
+        .toUpperCase();
   }
 
   @Override public void onClick(View v) {
@@ -157,7 +159,22 @@ public class ResultActivity extends AppCompatActivity
 
   }
 
-  @Override public void afterTextChanged(Editable s) {
+  private int[] nums = new int[] { 2, 5, 8, 13, 17, 18 };
 
+  @Override public void afterTextChanged(Editable s) {
+    //StringBuffer sb = new StringBuffer();
+    //String string = s.toString();
+    //int c = 0;
+    //for (int i = 0; i < nums.length; i++) {
+    //  if (string.length() > nums[i]) {
+    //    sb.append(string.substring(c, nums[i]));
+    //  } else {
+    //    sb.append(string.substring(c));
+    //    break;
+    //  }
+    //  sb.append(" ");
+    //  c = nums[i];
+    //}
+    //mTilHint.setHint(sb.toString());
   }
 }
