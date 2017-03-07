@@ -50,6 +50,5 @@
       android:layout_centerVertical="true"
       android:layout_marginRight="@dimen/d30"
       android:background="@drawable/selector_take_photo"
-      android:visibility="gone"
       />
 </RelativeLayout>

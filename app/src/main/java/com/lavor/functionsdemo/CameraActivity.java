@@ -8,7 +8,6 @@ import android.graphics.ImageFormat;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -26,7 +25,6 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 import com.googlecode.tesseract.android.TessBaseAPI;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -128,7 +126,7 @@ public class CameraActivity extends AppCompatActivity
     Log.d(TAG, "initCamera: ");
     camera = Camera.open(cameraIndex);
     camera.setPreviewDisplay(holder); // 设置用于显示拍照影像的SurfaceHolder对象
-    camera.setPreviewCallback(mPreviewCallback);
+    // camera.setPreviewCallback(mPreviewCallback);
     camera.setDisplayOrientation(0); // 相机自然的角度
     camera.startPreview();
   }
@@ -138,6 +136,7 @@ public class CameraActivity extends AppCompatActivity
     super.onPause();
     isOk = false;
     isPause = true;
+    isFinish = true;
     release();
   }
 
@@ -257,7 +256,6 @@ public class CameraActivity extends AppCompatActivity
     Log.d(TAG, "surfaceChanged: ");
     if (!isPause) {
       setParameter();
-      camera.startPreview();
     }
   }
 
@@ -266,7 +264,7 @@ public class CameraActivity extends AppCompatActivity
   }
 
   @Override public void onClick(View v) {
-    // camera.takePicture(this, null, this);
+    camera.takePicture(this, null, this);
   }
 
   @Override public void onPictureTaken(byte[] data, Camera camera) {
@@ -301,22 +299,22 @@ public class CameraActivity extends AppCompatActivity
         Log.d(TAG, "doInBackground: " + mData);
         if (mData != null && mPoint != null && mDrawRect != null) {
 
-          try {
-            Camera.Parameters parameters = camera.getParameters();
-            int width = parameters.getPreviewSize().width;
-            int height = parameters.getPreviewSize().height;
-
-            YuvImage yuv = new YuvImage(mData, parameters.getPreviewFormat(), width, height, null);
-
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            yuv.compressToJpeg(new Rect(0, 0, width, height), 100, out);
-
-            byte[] bytes = out.toByteArray();
-            bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-          //Bitmap bitmap = BitmapFactory.decodeByteArray(mData, 0, mData.length);
+          //try {
+          //  Camera.Parameters parameters = camera.getParameters();
+          //  int width = parameters.getPreviewSize().width;
+          //  int height = parameters.getPreviewSize().height;
+          //
+          //  YuvImage yuv = new YuvImage(mData, parameters.getPreviewFormat(), width, height, null);
+          //
+          //  ByteArrayOutputStream out = new ByteArrayOutputStream();
+          //  yuv.compressToJpeg(new Rect(0, 0, width, height), 100, out);
+          //
+          //  byte[] bytes = out.toByteArray();
+          //  bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+          //} catch (Exception e) {
+          //  e.printStackTrace();
+          //}
+          bitmap = BitmapFactory.decodeByteArray(mData, 0, mData.length);
           Log.d(TAG, "bitmap: " + bitmap);
           if (bitmap == null) return false;
           //截取
@@ -328,13 +326,13 @@ public class CameraActivity extends AppCompatActivity
 
           // Assume block needs to be inside a Try/Catch block.
           String path = Environment.getExternalStorageDirectory().toString();
-          File file = new File(path,
-              "pic.jpg"); // the File to save , append increasing numeric counter to prevent files from getting overwritten.
+          // the File to save , append increasing numeric counter to prevent files from getting overwritten.
+          File file = new File(path, "pic.jpg");
           try {
             FileOutputStream fOut = new FileOutputStream(file);
 
             // saving the Bitmap to a file compressed as a JPEG with 85% compression rate
-            mBitmap.compress(Bitmap.CompressFormat.JPEG, 85, fOut);
+            mBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fOut);
             fOut.flush(); // Not really required
             fOut.close(); // do not forget to close the stream
           } catch (Exception e) {
