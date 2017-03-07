@@ -1,39 +1,52 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.2"
+  compileSdkVersion 23
+  buildToolsVersion "23.0.2"
 
-    defaultConfig {
-        applicationId "com.lavor.functionsdemo"
-        minSdkVersion 14
-        targetSdkVersion 23
-        versionCode 1
-        versionName "1.0"
+  defaultConfig {
+    applicationId "com.lavor.functionsdemo"
+    minSdkVersion 14
+    targetSdkVersion 23
+    versionCode 1
+    versionName "1.0"
+  }
+  buildTypes {
+    release {
+
+      minifyEnabled false
+      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
     }
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
+  }
+//  signingConfigs {
+//    debug {
+//      // No debug config
+//    }
+//
+//    release {
+//      storeFile file("/Users/liufu/Documents/lefu8_cailiao/keystore/lefu_ishua.keystore")
+//      storePassword "lefu_ishua"
+//      keyAlias "lefu_ishua"
+//      keyPassword "lefu_ishua"
+//    }
+//  }
 }
 
 dependencies {
 
-    compile 'com.squareup.okhttp3:okhttp:3.2.0'
-    compile 'com.squareup.okhttp3:logging-interceptor:3.2.0'
-    compile 'com.squareup.retrofit2:retrofit:2.0.0'
-    compile 'com.squareup.retrofit2:converter-gson:2.0.0'
-    compile 'com.squareup.retrofit2:adapter-rxjava:2.0.0'
-    // compile 'com.github.bumptech.glide:glide:3.7.0'
-    compile 'com.jakewharton.rxbinding:rxbinding:0.4.0'
-    compile 'io.reactivex:rxjava:1.1.0'
-    compile 'io.reactivex:rxandroid:1.1.0'
+  compile 'com.squareup.okhttp3:okhttp:3.2.0'
+  compile 'com.squareup.okhttp3:logging-interceptor:3.2.0'
+  compile 'com.squareup.retrofit2:retrofit:2.0.0'
+  compile 'com.squareup.retrofit2:converter-gson:2.0.0'
+  compile 'com.squareup.retrofit2:adapter-rxjava:2.0.0'
+  // compile 'com.github.bumptech.glide:glide:3.7.0'
+  compile 'com.jakewharton.rxbinding:rxbinding:0.4.0'
+  compile 'io.reactivex:rxjava:1.1.0'
+  compile 'io.reactivex:rxandroid:1.1.0'
 
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.rmtheis:tess-two:6.1.1'
-    compile 'com.android.support:appcompat-v7:23.4.0'
-    compile 'com.android.support:design:23.4.0'
-    testCompile 'junit:junit:4.12'
+  compile fileTree(dir: 'libs', include: ['*.jar'])
+  compile 'com.rmtheis:tess-two:6.1.1'
+  compile 'com.android.support:appcompat-v7:23.4.0'
+  compile 'com.android.support:design:23.4.0'
+  testCompile 'junit:junit:4.12'
 }

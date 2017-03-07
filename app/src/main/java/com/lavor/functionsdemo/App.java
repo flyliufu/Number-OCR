@@ -1,6 +1,8 @@
 package com.lavor.functionsdemo;
 
+import android.app.Activity;
 import android.app.Application;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.DisplayMetrics;
@@ -86,6 +88,49 @@ public class App extends Application {
       mHttpAPI = retBuilder.baseUrl(URL).build().create(HttpAPI.class);
     }
     return mHttpAPI;
+  }
+
+  private static volatile ProgressDialog waitingDialog;
+
+  private static ProgressDialog getWaitingDialog(Activity act) {
+    if (waitingDialog != null) {
+      waitingDialog = null;
+    }
+    waitingDialog = new ProgressDialog(act);
+    waitingDialog.setMessage(act.getString(R.string.waiting));
+    waitingDialog.setIndeterminate(false);
+    waitingDialog.setCancelable(true);
+    waitingDialog.setCanceledOnTouchOutside(false);
+    return waitingDialog;
+  }
+
+  /**
+   * 通用关闭等待对话框 synchronized避免并发访问 在调用showDialog()的类的onPause中，
+   * 加上Tools.closeDialog();是很好的做法，能够避免窗口泄露
+   */
+  public static synchronized void closeDialog() {
+    try {
+      if (waitingDialog != null) {
+        if (waitingDialog.isShowing()) {
+          waitingDialog.cancel();
+        }
+        waitingDialog = null;
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  /**
+   * 通用显示等待对话框
+   */
+  public static void showDialog(final Activity act) {
+    act.runOnUiThread(new Runnable() {
+      @Override public void run() {
+        waitingDialog = getWaitingDialog(act);
+        waitingDialog.show();
+      }
+    });
   }
 
   @Override public void onCreate() {
