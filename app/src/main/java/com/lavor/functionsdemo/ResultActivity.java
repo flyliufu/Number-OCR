@@ -39,7 +39,7 @@ public class ResultActivity extends AppCompatActivity
   private Observer<JSONEntity<EnterpriseInfo>> mQueryObserver =
       new Observer<JSONEntity<EnterpriseInfo>>() {
         @Override public void onCompleted() {
-
+          App.closeDialog();
         }
 
         @Override public void onError(Throwable e) {
@@ -135,6 +135,7 @@ public class ResultActivity extends AppCompatActivity
   @Override public void onClick(View v) {
     switch (v.getId()) {
       case R.id.btn_submit:
+        App.showDialog(this);
         query();
         break;
       case R.id.btn_retake:
