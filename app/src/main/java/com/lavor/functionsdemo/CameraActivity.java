@@ -125,6 +125,11 @@ public class CameraActivity extends AppCompatActivity
   private void initCamera(SurfaceHolder holder, int cameraIndex) throws IOException {
     Log.d(TAG, "initCamera: ");
     camera = Camera.open(cameraIndex);
+    camera.autoFocus(new Camera.AutoFocusCallback() {
+      @Override public void onAutoFocus(boolean success, Camera camera) {
+        camera.setOneShotPreviewCallback(null);
+      }
+    });
     camera.setPreviewDisplay(holder); // 设置用于显示拍照影像的SurfaceHolder对象
     // camera.setPreviewCallback(mPreviewCallback);
     camera.setDisplayOrientation(0); // 相机自然的角度
